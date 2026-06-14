@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMET - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-body">
+
+    <div class="auth-container">
+        <h2 id="judulLogin" style="transition: color 0.3s;">METEOR 7</h2>
+        <p id="teksLogin" style="color: #666; margin-bottom: 20px;">Silakan login pengurus</p>
+        
+        <form id="loginForm">
+            <input type="text" id="user" placeholder="Username" required 
+                   style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ddd; outline: none;">
+            
+            <div class="input-group" style="position: relative; width: 100%; margin-bottom: 25px;">
+                <input type="password" id="pass" placeholder="Password" required 
+                       style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; outline: none;">
+                <i class="fas fa-eye" id="togglePass" 
+                   style="position: absolute; right: 15px; top: 14px; cursor: pointer; color: #888;"></i>
+            </div>
+                   
+            <button type="submit" id="btnMasuk" style="width: 100%; padding: 14px; background: #ffcc00; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: #001f3f; transition: background 0.3s;">MASUK</button>
+        </form>
+
+        <p id="devToggle" style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: #888; cursor: pointer; font-weight: 600;">
+            <i class="fas fa-cogs"></i> Login sebagai Developer
+        </p>
+    </div>
+
+    <script src="database.js"></script>
+
+    <script>
+        // 1. Logika Toggle Lihat Password
+        const passInput = document.getElementById('pass');
+        const toggleBtn = document.getElementById('togglePass');
+
+        toggleBtn.addEventListener('click', function() {
+            const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passInput.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+
+        // 2. Logika Mode Developer
+        let isDevMode = false;
+        document.getElementById('devToggle').addEventListener('click', function() {
+            isDevMode = !isDevMode;
+            
+            const judul = document.getElementById('judulLogin');
+            const teks = document.getElementById('teksLogin');
+            const btn = document.getElementById('btnMasuk');
+
+            if(isDevMode) {
+                // Tampilan saat mode Developer aktif
+                judul.innerText = "SISTEM DEVELOPER";
+                judul.style.color = "#e74c3c"; // Berubah merah
+                teks.innerText = "Masukkan kredensial khusus";
+                btn.style.background = "#e74c3c";
+                btn.style.color = "white";
+                this.innerHTML = '<i class="fas fa-user"></i> Kembali ke Login Pengurus';
+            } else {
+                // Tampilan saat mode Pengurus biasa
+                judul.innerText = "METEOR 7";
+                judul.style.color = "#001f3f";
+                teks.innerText = "Silakan login pengurus";
+                btn.style.background = "#ffcc00";
+                btn.style.color = "#001f3f";
+                this.innerHTML = '<i class="fas fa-cogs"></i> Login sebagai Developer';
+            }
+        });
+
+        // 3. Logika Form Login & Pengecekan Level
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const userIn = document.getElementById('user').value;
+            const passIn = document.getElementById('pass').value;
+
+            if (typeof OMET_DB !== 'undefined') {
+                const userData = OMET_DB[userIn];
+
+                if (userData && userData.pass === passIn) {
+                    // Cek apakah mode developer aktif tapi akunnya bukan developer
+                    if (isDevMode && userData.level !== 'developer') {
+                        alert('Akses Ditolak: Anda bukan Developer!');
+                        return; // Hentikan proses
+                    }
+
+                    // Cek apakah login biasa tapi pakai akun developer
+                    if (!isDevMode && userData.level === 'developer') {
+                        alert('Silakan gunakan jalur Login Developer di bawah!');
+                        return; // Hentikan proses
+                    }
+
+                    // Jika semua cocok, simpan data sesi
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('userActive', JSON.stringify(userData));
+                    
+                    // Arahkan ke halaman yang sesuai
+                    if (userData.level === 'developer') {
+                        window.location.href = 'developer.html'; // Akan kita buat setelah ini
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+
+                } else {
+                    alert('Username atau Password salah!');
+                }
+            } else {
+                alert('Database belum siap atau file database.js hilang!');
+            }
+        });
+    </script>
+</body>
+</html>
